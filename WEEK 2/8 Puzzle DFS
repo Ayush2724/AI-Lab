@@ -1,0 +1,92 @@
+class EightPuzzleDFS:
+    def __init__(self, initial_state, goal_state):
+        self.initial_state = tuple(initial_state)
+        self.goal_state = tuple(goal_state)
+        self.moves = {
+            'UP': (-1, 0),
+            'DOWN': (1, 0),
+            'LEFT': (0, -1),
+            'RIGHT': (0, 1)
+        }
+
+    def find_blank(self, state):
+        index = state.index(0)
+        return index // 3, index % 3
+
+    def get_neighbors(self, state):
+        neighbors = []
+        r, c = self.find_blank(state)
+        
+        for move, (dr, dc) in self.moves.items():
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < 3 and 0 <= nc < 3:
+                # Swap blank (0) with the neighbor
+                state_list = list(state)
+                idx1 = r * 3 + c
+                idx2 = nr * 3 + nc
+                state_list[idx1], state_list[idx2] = state_list[idx2], state_list[idx1]
+                neighbors.append((tuple(state_list), move))
+        return neighbors
+
+    def solve(self, max_depth=50):
+        # Since standard DFS can go infinitely deep, we implement Depth-Limited Search (DLS)
+        visited = set()
+        path = []
+        
+        def dfs(state, depth):
+            if state == self.goal_state:
+                return True
+            if depth >= max_depth:
+                return False
+            
+            visited.add(state)
+            
+            for neighbor, move in self.get_neighbors(state):
+                if neighbor not in visited:
+                    path.append((move, neighbor))
+                    if dfs(neighbor, depth + 1):
+                        return True
+                    path.pop()
+            
+            visited.remove(state)
+            return False
+
+        if dfs(self.initial_state, 0):
+            return path
+        return None
+
+def print_board(state):
+    for i in range(0, 9, 3):
+        print(list(state[i:i+3]))
+    print()
+    # Define Initial and Goal (Final) states
+# 0 represents the empty/blank tile
+initial_state = (
+    1, 2, 3,
+    0, 4, 6,
+    7, 5, 8
+)
+
+goal_state = (
+    1, 2, 3,
+    4, 5, 6,
+    7, 8, 0
+)
+
+print("Initial State:")
+print_board(initial_state)
+
+print("Goal State:")
+print_board(goal_state)
+
+solver = EightPuzzleDFS(initial_state, goal_state)
+solution = solver.solve(max_depth=20)
+
+if solution:
+    print(f"Solution found in {len(solution)} steps!")
+    current = initial_state
+    for step, (move, next_state) in enumerate(solution, 1):
+        print(f"Step {step}: Move {move}")
+        print_board(next_state)
+else:
+    print("No solution found within the depth limit.")
