@@ -1,0 +1,79 @@
+N = 4
+
+def calculate_cost(state):
+    cost = 0
+
+    for i in range(N):
+        for j in range(i + 1, N):
+            if abs(state[i] - state[j]) == abs(i - j):
+                cost += 1
+
+    return cost
+
+
+def generate_neighbors(state):
+    neighbors = []
+
+    for i in range(N):
+        for j in range(i + 1, N):
+            neighbor = state.copy()
+
+            # Swap two queen positions
+            neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
+
+            neighbors.append(neighbor)
+
+    return neighbors
+
+
+def print_board(state):
+    for row in range(N):
+        for col in range(N):
+            if state[col] == row:
+                print(" Q ", end="")
+            else:
+                print(" . ", end="")
+        print()
+
+
+def hill_climbing(state):
+    current = state.copy()
+
+    while True:
+        current_cost = calculate_cost(current)
+
+        print("\nCurrent state:", tuple(current))
+        print("Current cost:", current_cost)
+        print_board(current)
+
+        if current_cost == 0:
+            print("\nGoal state reached!")
+            return current
+
+        neighbors = generate_neighbors(current)
+
+        print("\nNeighbor states and costs:")
+        for neighbor in neighbors:
+            print(tuple(neighbor),
+                  "Cost =", calculate_cost(neighbor))
+
+        best = min(neighbors, key=calculate_cost)
+        best_cost = calculate_cost(best)
+
+        # Stop if no improvement is possible
+        if best_cost >= current_cost:
+            print("\nLocal minimum reached.")
+            print("No better neighbor found.")
+            return current
+
+        current = best
+
+
+# Initial state given in the lab
+initial_state = [3, 1, 2, 0]
+
+solution = hill_climbing(initial_state)
+
+print("\nFinal state:", tuple(solution))
+print("Final cost:", calculate_cost(solution))
+print("Ayush Shrivastava-1WA24CS076")
