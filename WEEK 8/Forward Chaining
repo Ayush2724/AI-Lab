@@ -1,0 +1,175 @@
+# Week 8 - FOL Forward Chaining
+# Prove that Robert is a Criminal
+
+print("WEEK 8: FOL FORWARD CHAINING")
+
+print("\nPROBLEM STATEMENT:")
+print("It is a crime for an American to sell weapons to hostile nations.")
+print("Country A is an enemy of America and owns some missiles.")
+print("Robert, an American, sold these missiles to Country A.")
+print("Prove that Robert is a criminal using Forward Chaining.")
+
+# Initial Knowledge Base
+facts = {
+    ("American", "Robert"),
+    ("Missile", "T1"),
+    ("Owns", "A", "T1"),
+    ("Enemy", "A", "America")
+}
+
+# Rules with their names and explanations
+rules = [
+    {
+        "name": "R1",
+        "conditions": [("Missile", "?x")],
+        "conclusion": ("Weapon", "?x"),
+        "formula": "Missile(x) -> Weapon(x)",
+        "meaning": "Every missile is a weapon."
+    },
+    {
+        "name": "R2",
+        "conditions": [("Enemy", "?x", "America")],
+        "conclusion": ("Hostile", "?x"),
+        "formula": "Enemy(x, America) -> Hostile(x)",
+        "meaning": "An enemy of America is hostile."
+    },
+    {
+        "name": "R3",
+        "conditions": [
+            ("Missile", "?x"),
+            ("Owns", "A", "?x")
+        ],
+        "conclusion": ("Sells", "Robert", "?x", "A"),
+        "formula": "Missile(x) AND Owns(A,x) -> Sells(Robert,x,A)",
+        "meaning": "Missiles owned by A were sold by Robert."
+    },
+    {
+        "name": "R4",
+        "conditions": [
+            ("American", "?p"),
+            ("Weapon", "?q"),
+            ("Sells", "?p", "?q", "?r"),
+            ("Hostile", "?r")
+        ],
+        "conclusion": ("Criminal", "?p"),
+        "formula": "American(p) AND Weapon(q) AND Sells(p,q,r) AND Hostile(r) -> Criminal(p)",
+        "meaning": "An American selling weapons to a hostile nation is a criminal."
+    }
+]
+
+
+def show_fact(fact):
+    return f"{fact[0]}({', '.join(fact[1:])})"
+
+
+def match(pattern, fact, values):
+    if len(pattern) != len(fact) or pattern[0] != fact[0]:
+        return None
+
+    result = values.copy()
+
+    for p, f in zip(pattern[1:], fact[1:]):
+        if p.startswith("?"):
+            if p in result and result[p] != f:
+                return None
+            result[p] = f
+        elif p != f:
+            return None
+
+    return result
+
+
+def find_matches(conditions, facts, values=None):
+    if values is None:
+        values = {}
+
+    if not conditions:
+        return [values]
+
+    results = []
+
+    for fact in sorted(facts):
+        matched = match(conditions[0], fact, values)
+
+        if matched is not None:
+            results.extend(
+                find_matches(conditions[1:], facts, matched)
+            )
+
+    return results
+
+
+def substitute(conclusion, values):
+    return tuple(values.get(x, x) for x in conclusion)
+
+
+def forward_chaining(facts, rules, query):
+    facts = set(facts)
+
+    print("\nINITIAL KNOWLEDGE BASE:")
+    for fact in sorted(facts):
+        print(" ", show_fact(fact))
+
+    print("\nRULES USED:")
+    for rule in rules:
+        print(f"\n{rule['name']}: {rule['formula']}")
+        print("Meaning:", rule["meaning"])
+
+    print("\nFORWARD CHAINING STEPS:")
+
+    step = 1
+
+    while True:
+        new_facts = set()
+
+        for rule in rules:
+            matches = find_matches(rule["conditions"], facts)
+
+            for values in matches:
+                new_fact = substitute(rule["conclusion"], values)
+
+                if new_fact not in facts and new_fact not in new_facts:
+                    new_facts.add(new_fact)
+
+                    print(f"\nStep {step}: {show_fact(new_fact)}")
+                    print("Rule Applied:", rule["name"])
+                    print("Rule:", rule["formula"])
+
+                    used_facts = [
+                        substitute(condition, values)
+                        for condition in rule["conditions"]
+                    ]
+
+                    print("Based on:")
+                    for fact in used_facts:
+                        print(" -", show_fact(fact))
+
+                    print("Conclusion:", show_fact(new_fact))
+
+                    step += 1
+
+                    if new_fact == query:
+                        print("\nFINAL RESULT:")
+                        print("Query:", show_fact(query))
+                        print("Result: TRUE")
+                        print("Hence, Robert is a Criminal.")
+                        return True
+
+        if not new_facts:
+            break
+
+        facts.update(new_facts)
+
+    print("\nFINAL RESULT:")
+    print("Query:", show_fact(query))
+    print("Result:", "TRUE" if query in facts else "FALSE")
+
+    return query in facts
+
+
+# Query
+query = ("Criminal", "Robert")
+
+forward_chaining(facts, rules, query)
+
+print("Ayush Shrivastava 1WA24CS076")
